@@ -23,3 +23,5 @@ struct struct_matrix {
 typedef struct struct_matrix Matrix; 
 
 void create_matrix(Matrix *m, int nrow, int ncol);
+void populate_matrix(Matrix *m);
+void print_matrix(Matrix *m, char iden);

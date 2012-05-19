@@ -12,8 +12,8 @@
  *
  * =====================================================================================
  */
-#include <stdlib.h>
 #include "matrix.h"
+#include <stdlib.h>
 
 void create_matrix(Matrix *m, int nrow, int ncol) { 
     int i;
@@ -26,14 +26,22 @@ void create_matrix(Matrix *m, int nrow, int ncol) {
     }
 }
 
-/*int main() {
-    Matrix m;
-    create_matrix(&m, 4, 4);
-    for(int i = 0; i < m.nrow; i++){
-        for(int j = 0; j < m.ncol; j++){
-            printf("c[%d][%d] = %d", i, j , m.data[i][j]);
+void populate_matrix(Matrix *m) {
+    int i, j;
+    for(i = 0; i < m->nrow; i++){
+        for(j = 0; j < m->ncol; j++){
+            m->data[i][j] = rand() % 10;
+        }
+    }
+}
+
+void print_matrix(Matrix *m, char iden) {
+    int i, j;
+
+    for(i = 0; i < m->nrow; i++){
+        for(j = 0; j < m->ncol; j++){
+            printf("%c[%d][%d] = %d  ", iden, i, j , m->data[i][j]);
         }
         printf("\n");
     }
-    return 0;
-}*/
+}
