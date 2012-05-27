@@ -78,12 +78,12 @@ void rsync_process_blocks(Matrix *mat, Matrix *sub, int id, int push) {
             cbegin = c_mn * coffset;
             cend = cbegin + coffset;
 
+            subr = (step / (M/P));
+            subc = (step % (N/P));
+
             for(ri = rbegin, r = 0; ri < rend; ri++, r++){
                 for(rj = cbegin, s = 0; rj < cend; rj++, s++){
                     
-                    subr = (step / roffset);
-                    subc = (step % coffset);
-
                     if(push){
                         mat->data[ri][rj] = sub->data[r + (subr * roffset)][s + (subc * coffset)];
                     }else{
@@ -108,7 +108,7 @@ void rsync_process_blocks(Matrix *mat, Matrix *sub, int id, int push) {
  */
 void rsync_process_submatrix(Matrix *local, Matrix *sub, int row, int col, int push) {
     int i, j, r, c,
-        offset = local->nrow / sub->nrow,
+        offset = sub->nrow,
         ibegin = row * offset,
         jbegin = col * offset;
 
@@ -149,7 +149,7 @@ int main() {
     sbrn = (B_RN / K) * (K / P);
     sbcn = (B_CN / N) * (N / Q);
     
-    local_block = sarn / (A_RN / M);
+    local_block =  BLOCK_SZ;
     
     LCM = lcm(P, Q);
     shift_matrix_left(&A, BLOCK_SZ, 1);
