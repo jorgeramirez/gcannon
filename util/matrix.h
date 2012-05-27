@@ -25,3 +25,6 @@ typedef struct struct_matrix Matrix;
 void create_matrix(Matrix *m, int nrow, int ncol);
 void populate_matrix(Matrix *m);
 void print_matrix(Matrix *m, char iden);
+//void rsync_submatrix(Matrix *mat, Matrix *sub, int id, int push, int P, int Q, int M,  int SIZE);
+//void rsync_local(Matrix *mat, Matrix *sub, int row, int col, int push);
+//void matrix_product(Matrix *c, Matrix *a, Matrix *b);

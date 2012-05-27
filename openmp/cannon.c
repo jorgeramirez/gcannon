@@ -26,7 +26,7 @@
  * shift the given matrix left.
  *
  * @param m: the matrix to shift.
- * @param incstep: a value < 0 indicates that it is a first shift, otherwise is
+ * @param incstep: a value > 0 indicates that it is a first shift, otherwise is
  *                 normal shift.
  */
 void shift_matrix_left(Matrix *m, int incstep) {
@@ -54,7 +54,7 @@ void shift_matrix_left(Matrix *m, int incstep) {
  * shift the given matrix up.
  *
  * @param m: the matrix to shift.
- * @param incstep: a value < 0 indicates that it is a first shift, otherwise is
+ * @param incstep: a value > 0 indicates that it is a first shift, otherwise is
  *                 normal shift.
  */
 void shift_matrix_up(Matrix *m, int incstep) {
@@ -83,10 +83,10 @@ void shift_matrix_up(Matrix *m, int incstep) {
 void process_mult(Matrix *A, Matrix *B, Matrix *C) {
     int r, c, id, k, 
         rbegin, rend, cbegin, cend, // block delimiters
-        l, m, n;
+        l, m;
     Matrix sa, sb, sc;
 
-    #pragma omp parallel default(none) private(l, m, n, r, c, k, rbegin, rend, cbegin, cend, id, sa, sb, sc) shared(A, B, C) num_threads(P)
+    #pragma omp parallel default(none) private(l, m, r, c, k, rbegin, rend, cbegin, cend, id, sa, sb, sc) shared(A, B, C) num_threads(P)
     {
         id = omp_get_thread_num();
         rbegin = (id / P_SQRT) * BLOCK_SZ;
@@ -99,7 +99,7 @@ void process_mult(Matrix *A, Matrix *B, Matrix *C) {
         create_matrix(&sb, BLOCK_SZ, BLOCK_SZ);
         create_matrix(&sc, BLOCK_SZ, BLOCK_SZ);
 
-        //copy the blocks to for this process
+        //copy the blocks for this process
         for(r = rbegin, l = 0; r < rend; r++, l++){
             for(c = cbegin, m = 0; c < cend; c++, m++){
                 sa.data[l][m] = A->data[r][c];
