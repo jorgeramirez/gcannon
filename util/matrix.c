@@ -30,7 +30,7 @@ void populate_matrix(Matrix *m) {
     int i, j;
     for(i = 0; i < m->nrow; i++){
         for(j = 0; j < m->ncol; j++){
-            m->data[i][j] = rand() % 10;
+            m->data[i][j] = rand() % 10 + 1;
         }
     }
 }
