@@ -67,6 +67,8 @@ void process_mult(Matrix *A, Matrix *B, Matrix *C) {
 
 int main() {
     Matrix A, B, C;
+    double t1, t2;
+    int i;
 
     create_matrix(&A, N, N);
     create_matrix(&B, N, N);
@@ -83,15 +85,17 @@ int main() {
     shift_matrix_left(&A, BLOCK_SZ, 1);
     shift_matrix_up(&B, BLOCK_SZ, 1);
 
-    int i;
+    t1 = omp_get_wtime();
     for(i = 0; i < P_SQRT; i++){
         process_mult(&A, &B, &C);
         shift_matrix_left(&A, BLOCK_SZ, 0);
         shift_matrix_up(&B, BLOCK_SZ, 0);
     }
+    t2 = omp_get_wtime();
 
     printf("\nResultado\n\n");
     print_matrix(&C, 'C');
+    printf("\nTiempo: %.4f segundos\n", (t2 - t1));
     return 0;
 }
 

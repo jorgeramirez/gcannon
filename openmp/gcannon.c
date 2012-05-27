@@ -126,10 +126,11 @@ void rsync_process_submatrix(Matrix *local, Matrix *sub, int row, int col, int p
 
 int main() {
     int id, sarn, sacn, sbcn, sbrn, LCM, t, i, j, l, jp, ip, local_block;
+    double t1, t2;
     Matrix A, B, C, // global matrices
            sa, sb, sc, //local matrices of the process
            subsa, subsb, subsc; //local submatrices of the process
-
+    
     create_matrix(&A, A_RN, A_CN);
     create_matrix(&B, B_RN, B_CN);
     create_matrix(&C, A_RN, B_CN);
@@ -154,6 +155,7 @@ int main() {
     shift_matrix_left(&A, BLOCK_SZ, 1);
     shift_matrix_up(&B, BLOCK_SZ, 1);
 
+    t1 = omp_get_wtime();
     #pragma omp parallel default(none) shared(A, B, C, sarn, sacn, sbrn, sbcn, LCM, local_block) \
                                        private(sa, sb, sc, id, t, i, j, l, jp, ip, subsa, subsb, subsc) num_threads(P * Q)
     {
@@ -200,8 +202,11 @@ int main() {
             }
         }
     }
-    
+    t2 = omp_get_wtime();
+
     printf("\nResultado\n");
     print_matrix(&C, 'C');
+    printf("\nTiempo: %.4f segundos\n", (t2 - t1));
+
     return 0;
 }
