@@ -44,62 +44,17 @@ int lcm(a, b) {
 
 
 /**
- * shift the given matrix left.
+ * Syncs the block of the process using block cyclic
+ * distribution
  *
- * @param m: the matrix to shift.
- * @param incstep: a value > 0 indicates that it is a first shift, otherwise is
- *                 normal shift.
+ * @param mat: the global matrix
+ * @param sub: the local matrix of the process
+ * @param id: the process id
+ * @param push: true to push data from sub to mat, else it load the corresponding blocks
+ *              from mat to sub.
  */
-void shift_matrix_left(Matrix *m, int incstep) {
-    int i, j, k, s, step = BLOCK_SZ;
-    Matrix aux;
-    
-    create_matrix(&aux, 1, m->ncol);
-    for(k = 0, s = 0; k < A_CN; k += BLOCK_SZ, s++){
-        for(i = k; i < (k + BLOCK_SZ); i++){
-            if(incstep > 0){
-                step = s * BLOCK_SZ;
-            }
-            for(j = 0; j < m->ncol; j++){
-                aux.data[0][j] = m->data[i][(j + step) % m->ncol];
-            }
-            for(j = 0; j < m->ncol; j++){
-                m->data[i][j] = aux.data[0][j];
-            }
-        }
-    }
-}
 
-
-/**
- * shift the given matrix up.
- *
- * @param m: the matrix to shift.
- * @param incstep: a value > 0 indicates that it is a first shift, otherwise is
- *                 normal shift.
- */
-void shift_matrix_up(Matrix *m, int incstep) {
-    int i, j, k, s, step = BLOCK_SZ;
-    Matrix aux;
-    
-    create_matrix(&aux, 1, m->nrow);
-    for(k = 0, s = 0; k < A_RN; k += BLOCK_SZ, s++){
-        for(i = k; i < (k + BLOCK_SZ); i++){
-            if(incstep > 0){
-                step = s * BLOCK_SZ;
-            }
-            for(j = 0; j < m->nrow; j++){
-                aux.data[0][j] = m->data[(j + step) % m->nrow][i];
-            }
-            for(j = 0; j < m->nrow; j++){
-                m->data[j][i] = aux.data[0][j];
-            }
-        }
-    }
-}
-
-
-void rsync_submatrix(Matrix *mat, Matrix *sub, int id, int push) {
+void rsync_process_blocks(Matrix *mat, Matrix *sub, int id, int push) {
     int r_pq, c_pq, // row and column of PxQ processes matrices
         r_mn, c_mn, // row and column of MxN block matrices
         ri, rj, // row and column of input matrices, which are square for simplicity.
@@ -141,32 +96,28 @@ void rsync_submatrix(Matrix *mat, Matrix *sub, int id, int push) {
 }
 
 
-
-void rsync_local(Matrix *mat, Matrix *sub, int row, int col, int push) {
+/**
+ * Syncs the block of the local matrix of the process
+ *
+ * @param local: the local matrix of the process
+ * @param sub: a matrix that represents a block to be updated or loaded
+ * @param row: initial row position of the block
+ * @param col: initial column position of the block
+ * @param push: true to push data from sub to local, else it load the corresponding block
+ *              from local to sub.
+ */
+void rsync_process_submatrix(Matrix *local, Matrix *sub, int row, int col, int push) {
     int i, j, r, c,
-        offset = mat->nrow / sub->nrow,
+        offset = local->nrow / sub->nrow,
         ibegin = row * offset,
         jbegin = col * offset;
 
     for(i = ibegin, r = 0; i < (ibegin + offset); i++, r++){
         for(j = jbegin, c = 0; j < (jbegin + offset); j++, c++){
             if(push){
-                mat->data[i][j] = sub->data[r][c];
+                local->data[i][j] = sub->data[r][c];
             }else{
-                sub->data[r][c] = mat->data[i][j];
-            }
-        }
-    }
-}
-
-
-void matrix_product(Matrix *c, Matrix *a, Matrix *b){
-    int r, s, k;
-
-    for(r = 0; r < a->nrow; r++){
-        for(s = 0; s < b->ncol; s++){
-            for(k = 0; k < a->ncol; k++){
-                c->data[r][s] += a->data[r][k] * b->data[k][s];
+                sub->data[r][c] = local->data[i][j];
             }
         }
     }
@@ -174,10 +125,10 @@ void matrix_product(Matrix *c, Matrix *a, Matrix *b){
 
 
 int main() {
-    int id, sarn, sacn, sbcn, sbrn, LCM, t, i, j, l, jp, ip;
+    int id, sarn, sacn, sbcn, sbrn, LCM, t, i, j, l, jp, ip, local_block;
     Matrix A, B, C, // global matrices
-           sa, sb, sc, //local matrices
-           subsa, subsb, subsc; //local submatrices
+           sa, sb, sc, //local matrices of the process
+           subsa, subsb, subsc; //local submatrices of the process
 
     create_matrix(&A, A_RN, A_CN);
     create_matrix(&B, B_RN, B_CN);
@@ -197,11 +148,11 @@ int main() {
     sbrn = (B_RN / K) * (K / P);
     sbcn = (B_CN / N) * (N / Q);
     
-    int local_block = sarn / (A_RN / M);
+    local_block = sarn / (A_RN / M);
     
     LCM = lcm(P, Q);
-    shift_matrix_left(&A, 1);
-    shift_matrix_up(&B, 1);
+    shift_matrix_left(&A, BLOCK_SZ, 1);
+    shift_matrix_up(&B, BLOCK_SZ, 1);
 
     #pragma omp parallel default(none) shared(A, B, C, sarn, sacn, sbrn, sbcn, LCM, local_block) \
                                        private(sa, sb, sc, id, t, i, j, l, jp, ip, subsa, subsb, subsc) num_threads(P * Q)
@@ -218,8 +169,8 @@ int main() {
             create_matrix(&subsb, local_block, local_block);
             create_matrix(&subsc, local_block, local_block);
             
-            rsync_submatrix(&A, &sa, id, FALSE);
-            rsync_submatrix(&B, &sb, id, FALSE);
+            rsync_process_blocks(&A, &sa, id, FALSE);
+            rsync_process_blocks(&B, &sb, id, FALSE);
             
             for(i = 0; i < (M / P); i++){
                 for(j = 0; j < (N / Q); j++){
@@ -227,26 +178,25 @@ int main() {
                         jp = (j % K + l * LCM / Q) % (K / Q);
                         ip = (i % K + l * LCM / P) % (K / P);
 
-
-                        rsync_local(&sc, &subsc, i, j, FALSE);
-                        rsync_local(&sa, &subsa, i, jp, FALSE);
-                        rsync_local(&sb, &subsb, ip, j, FALSE);
+                        rsync_process_submatrix(&sc, &subsc, i, j, FALSE);
+                        rsync_process_submatrix(&sa, &subsa, i, jp, FALSE);
+                        rsync_process_submatrix(&sb, &subsb, ip, j, FALSE);
                         
                         matrix_product(&subsc, &subsa, &subsb);
 
-                        rsync_local(&sc, &subsc, i, j, TRUE);
+                        rsync_process_submatrix(&sc, &subsc, i, j, TRUE);
                     }
                 }
             }
             
-            rsync_submatrix(&C, &sc, id, TRUE);
+            rsync_process_blocks(&C, &sc, id, TRUE);
             
             #pragma omp barrier
 
             #pragma omp single
             {
-                shift_matrix_left(&A, 0);
-                shift_matrix_up(&B, 0);
+                shift_matrix_left(&A, BLOCK_SZ, 0);
+                shift_matrix_up(&B, BLOCK_SZ, 0);
             }
         }
     }

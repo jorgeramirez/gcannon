@@ -22,60 +22,6 @@
 #define N 4 //matrix size
 #define BLOCK_SZ (N / P_SQRT) //block size
 
-/**
- * shift the given matrix left.
- *
- * @param m: the matrix to shift.
- * @param incstep: a value > 0 indicates that it is a first shift, otherwise is
- *                 normal shift.
- */
-void shift_matrix_left(Matrix *m, int incstep) {
-    int i, j, k, s, step = BLOCK_SZ;
-    Matrix aux;
-    
-    create_matrix(&aux, 1, m->ncol);
-    for(k = 0, s = 0; k < N; k += BLOCK_SZ, s++){
-        for(i = k; i < (k + BLOCK_SZ); i++){
-            if(incstep > 0){
-                step = s * BLOCK_SZ;
-            }
-            for(j = 0; j < m->ncol; j++){
-                aux.data[0][j] = m->data[i][(j + step) % m->ncol];
-            }
-            for(j = 0; j < m->ncol; j++){
-                m->data[i][j] = aux.data[0][j];
-            }
-        }
-    }
-}
-
-
-/**
- * shift the given matrix up.
- *
- * @param m: the matrix to shift.
- * @param incstep: a value > 0 indicates that it is a first shift, otherwise is
- *                 normal shift.
- */
-void shift_matrix_up(Matrix *m, int incstep) {
-    int i, j, k, s, step = BLOCK_SZ;
-    Matrix aux;
-    
-    create_matrix(&aux, 1, m->nrow);
-    for(k = 0, s = 0; k < N; k += BLOCK_SZ, s++){
-        for(i = k; i < (k + BLOCK_SZ); i++){
-            if(incstep > 0){
-                step = s * BLOCK_SZ;
-            }
-            for(j = 0; j < m->nrow; j++){
-                aux.data[0][j] = m->data[(j + step) % m->nrow][i];
-            }
-            for(j = 0; j < m->nrow; j++){
-                m->data[j][i] = aux.data[0][j];
-            }
-        }
-    }
-}
 
 /**
  * multiply the corresponding submatrices of A and B.
@@ -108,14 +54,7 @@ void process_mult(Matrix *A, Matrix *B, Matrix *C) {
             }
         }
         
-        //do multiplication of the block
-        for(r = 0; r < BLOCK_SZ; r++){
-            for(c = 0; c < BLOCK_SZ; c++){
-                for(k = 0; k < BLOCK_SZ; k++){
-                    sc.data[r][c] += sa.data[r][k] * sb.data[k][c];
-                }
-            }
-        }
+        matrix_product(&sc, &sa, &sb);
 
         //put results back to C
         for(r = rbegin, l = 0; r < rend; r++, l++){
@@ -141,14 +80,14 @@ int main() {
     printf("\n\n");
     print_matrix(&B, 'B');
     
-    shift_matrix_left(&A, 1);
-    shift_matrix_up(&B, 1);
+    shift_matrix_left(&A, BLOCK_SZ, 1);
+    shift_matrix_up(&B, BLOCK_SZ, 1);
 
     int i;
     for(i = 0; i < P_SQRT; i++){
         process_mult(&A, &B, &C);
-        shift_matrix_left(&A, 0);
-        shift_matrix_up(&B, 0);
+        shift_matrix_left(&A, BLOCK_SZ, 0);
+        shift_matrix_up(&B, BLOCK_SZ, 0);
     }
 
     printf("\nResultado\n\n");
