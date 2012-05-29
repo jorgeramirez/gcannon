@@ -116,3 +116,25 @@ void matrix_product(Matrix *c, Matrix *a, Matrix *b){
         }
     }
 }
+
+int* create_array_as_matrix(int r, int c){
+    int *mat = calloc(r * c, sizeof(int));
+    return mat;
+}
+
+void populate_array_as_matrix(int *arr, int r, int c){
+    int j; 
+    for(j = 0; j < r*c; j++){
+        arr[j] = rand() % 10 + 1;
+    }
+}
+
+int array_as_matrix_equals(int *a, int *b, int r, int c){
+    int i = 0;
+    for(i = 0; i < r*c; i++){
+        if(a[i] != b[i]){
+            return FALSE;
+        } 
+    }
+    return TRUE;
+}

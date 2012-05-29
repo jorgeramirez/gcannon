@@ -19,7 +19,7 @@
 
 #define P_SQRT 2 
 #define P (P_SQRT * P_SQRT) //number of processes
-#define N 4 //matrix size
+#define N 40 //matrix size
 #define BLOCK_SZ (N / P_SQRT) //block size
 
 
@@ -77,10 +77,10 @@ int main() {
     populate_matrix(&A);
     populate_matrix(&B);
 
-    printf("Matrices generadas\n");
-    print_matrix(&A, 'A');
-    printf("\n\n");
-    print_matrix(&B, 'B');
+//    printf("Matrices generadas\n");
+//    print_matrix(&A, 'A');
+//    printf("\n\n");
+//    print_matrix(&B, 'B');
     
     shift_matrix_left(&A, BLOCK_SZ, 1);
     shift_matrix_up(&B, BLOCK_SZ, 1);
@@ -94,7 +94,7 @@ int main() {
     t2 = omp_get_wtime();
 
     printf("\nResultado\n\n");
-    print_matrix(&C, 'C');
+//    print_matrix(&C, 'C');
     printf("\nTiempo: %.4f segundos\n", (t2 - t1));
     return 0;
 }

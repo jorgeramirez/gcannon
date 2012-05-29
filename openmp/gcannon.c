@@ -19,14 +19,14 @@
 
 #define P 2  //physical processes array P x Q
 #define Q 2
-#define M 4  //virtual processes array M x N
-#define N 4
-#define K 4
+#define M 32  //virtual processes array M x N
+#define N 32
+#define K 32
 
-#define A_RN 8 //matrix A of A_RN x A_CN
-#define A_CN 8 
-#define B_RN 8 //matrix B of B_RN x B_CN
-#define B_CN 8
+#define A_RN 320 //matrix A of A_RN x A_CN
+#define A_CN 320 
+#define B_RN 320 //matrix B of B_RN x B_CN
+#define B_CN 320
 
 
 #define BLOCK_SZ (A_RN / M) //block size for A and B, since we asume their are square matrices for simplicity.
@@ -138,10 +138,10 @@ int main() {
     populate_matrix(&A);
     populate_matrix(&B);
 
-    printf("\nMatrices generadas\n");
-    print_matrix(&A, 'A');
-    printf("\n");
-    print_matrix(&B, 'B');
+    //printf("\nMatrices generadas\n");
+    //print_matrix(&A, 'A');
+    //printf("\n");
+    //print_matrix(&B, 'B');
 
     //submatrices sizes
     sarn = (A_RN / M) * (M / P);
@@ -205,7 +205,7 @@ int main() {
     t2 = omp_get_wtime();
 
     printf("\nResultado\n");
-    print_matrix(&C, 'C');
+    //print_matrix(&C, 'C');
     printf("\nTiempo: %.4f segundos\n", (t2 - t1));
 
     return 0;
